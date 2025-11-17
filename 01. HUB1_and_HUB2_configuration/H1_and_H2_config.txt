@@ -1,0 +1,215 @@
+
+
+R1(HUB):
+
+hostname R1
+!
+vrf definition DATA
+ rd 3009:500
+ !
+ address-family ipv4
+ exit-address-family
+!
+vrf definition ISP-1
+ rd 3009:100
+ !
+ address-family ipv4
+ exit-address-family
+!
+vrf definition ISP-2
+ rd 3009:200
+ !
+ address-family ipv4
+ exit-address-family
+!
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.255
+!
+interface Tunnel1
+ vrf forwarding DATA
+ ip address 10.1.0.1 255.255.255.0
+ no ip redirects
+ ip nhrp authentication MyNet
+ ip nhrp network-id 100
+ no ip nhrp shortcut
+ ip nhrp redirect
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+ tunnel vrf ISP-1
+!
+interface Tunnel2
+ vrf forwarding DATA
+ ip address 10.2.0.1 255.255.255.0
+ no ip redirects
+ ip nhrp authentication MyNet
+ ip nhrp network-id 200
+ no ip nhrp shortcut
+ ip nhrp redirect
+ tunnel source GigabitEthernet0/1
+ tunnel mode gre multipoint
+ tunnel vrf ISP-2
+!
+interface GigabitEthernet0/0
+ vrf forwarding ISP-1
+ ip address 172.16.1.1 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ vrf forwarding ISP-2
+ ip address 172.20.1.1 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/3
+ ip address 10.1.2.1 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router bgp 19
+ bgp router-id 1.1.1.1
+ bgp listen range 10.2.0.0/24 peer-group SPOKES_DMVPN2
+ bgp listen range 10.1.0.0/24 peer-group SPOKES_DMVPN1
+ bgp bestpath as-path multipath-relax
+ maximum-paths eibgp 4
+ !
+ address-family ipv4 vrf DATA
+  network 1.1.1.1 mask 255.255.255.255
+  network 10.1.2.0 mask 255.255.255.0
+  neighbor SPOKES_DMVPN1 peer-group
+  neighbor SPOKES_DMVPN1 remote-as 3009
+  neighbor SPOKES_DMVPN1 next-hop-self
+  neighbor SPOKES_DMVPN1 as-override
+  neighbor SPOKES_DMVPN1 allowas-in 1
+  neighbor SPOKES_DMVPN2 peer-group
+  neighbor SPOKES_DMVPN2 remote-as 3009
+  neighbor SPOKES_DMVPN2 next-hop-self
+  neighbor SPOKES_DMVPN2 as-override
+  neighbor SPOKES_DMVPN2 allowas-in 1
+ exit-address-family
+ !
+ address-family ipv4 vrf ISP-1
+  neighbor 172.16.1.100 remote-as 100
+  neighbor 172.16.1.100 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf ISP-2
+  neighbor 172.20.1.200 remote-as 200
+  neighbor 172.20.1.200 activate
+ exit-address-family
+!
+
+////////////////////////////////////////////////////
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+R2(HUB):
+
+hostname R2
+
+vrf definition DATA
+ rd 3009:500
+ !
+ address-family ipv4
+ exit-address-family
+!
+vrf definition ISP-1
+ rd 3009:100
+ !
+ address-family ipv4
+ exit-address-family
+!
+vrf definition ISP-2
+ rd 3009:200
+ !
+ address-family ipv4
+ exit-address-family
+!
+interface Loopback0
+ ip address 2.2.2.2 255.255.255.255
+!
+interface Tunnel1
+ vrf forwarding DATA
+ ip address 10.1.0.2 255.255.255.0
+ no ip redirects
+ ip nhrp authentication MyNet
+ ip nhrp map 10.1.0.1 172.16.1.1
+ ip nhrp map multicast 172.16.1.1
+ ip nhrp network-id 100
+ ip nhrp nhs 10.1.0.1
+ ip nhrp redirect
+ tunnel source GigabitEthernet0/1
+ tunnel mode gre multipoint
+ tunnel vrf ISP-1
+!
+interface Tunnel2
+ vrf forwarding DATA
+ ip address 10.2.0.2 255.255.255.0
+ no ip redirects
+ ip nhrp authentication MyNet
+ ip nhrp map 10.2.0.1 172.20.1.1
+ ip nhrp map multicast 172.20.1.1
+ ip nhrp network-id 200
+ ip nhrp nhs 10.2.0.1
+ ip nhrp redirect
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+ tunnel vrf ISP-2
+!
+interface GigabitEthernet0/0
+ vrf forwarding ISP-2
+ ip address 172.20.2.2 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ vrf forwarding ISP-1
+ ip address 172.16.2.2 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/3
+ ip address 10.1.2.2 255.255.255.0
+ duplex auto
+ speed auto
+ media-type rj45
+!
+router bgp 19
+ bgp router-id 2.2.2.2
+ bgp listen range 10.2.0.0/24 peer-group SPOKES_DMVPN2
+ bgp listen range 10.1.0.0/24 peer-group SPOKES_DMVPN1
+ bgp bestpath as-path multipath-relax
+ maximum-paths eibgp 4
+ !
+ address-family ipv4 vrf DATA
+  network 2.2.2.2 mask 255.255.255.255
+  network 10.1.2.0 mask 255.255.255.0
+  neighbor SPOKES_DMVPN1 peer-group
+  neighbor SPOKES_DMVPN1 remote-as 3009
+  neighbor SPOKES_DMVPN1 next-hop-self
+  neighbor SPOKES_DMVPN1 as-override
+  neighbor SPOKES_DMVPN1 allowas-in 1
+  neighbor SPOKES_DMVPN2 peer-group
+  neighbor SPOKES_DMVPN2 remote-as 3009
+  neighbor SPOKES_DMVPN2 next-hop-self
+  neighbor SPOKES_DMVPN2 as-override
+  neighbor SPOKES_DMVPN2 allowas-in 1
+ exit-address-family
+ !
+ address-family ipv4 vrf ISP-1
+  network 2.2.2.2 mask 255.255.255.255
+  network 10.1.2.0 mask 255.255.255.0
+  neighbor 172.16.2.100 remote-as 100
+  neighbor 172.16.2.100 activate
+ exit-address-family
+ !
+ address-family ipv4 vrf ISP-2
+  network 2.2.2.2 mask 255.255.255.255
+  neighbor 172.20.2.200 remote-as 200
+  neighbor 172.20.2.200 activate
+ exit-address-family
+
