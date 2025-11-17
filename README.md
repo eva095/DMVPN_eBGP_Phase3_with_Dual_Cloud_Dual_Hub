@@ -8,7 +8,7 @@
 
 ## 📋 Топология и описание схемы сети
 
-![Схема сети DMVPN_eBGP_Phase3_with_Dual_Cloud_Dual_Hub](images/DMVPN_eBGP_Phase3_with_Dual_Cloud_Dual_Hub.jpg)
+![Схема сети DMVPN](images/DMVPN_eBGP_Phase3_with_Dual_Cloud_Dual_Hub.jpg)
 
 Сеть построена по отказоустойчивой архитектуре DMVPN Phase 3:
 
